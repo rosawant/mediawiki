@@ -1,0 +1,143 @@
+image:
+  registry: docker.io
+  repository: bitnami/mediawiki
+  tag: 1.34.2-debian-10-r31
+  pullPolicy: IfNotPresent
+mediawikiUser: user
+mediawikiEmail: user@example.com
+mediawikiName: My Wiki
+allowEmptyPassword: "yes"
+externalDatabase:
+  host:
+  port: 3306
+  user: bn_mediawiki
+  password:
+  database: bitnami_mediawiki
+mariadb:
+  enabled: true
+  replication:
+    enabled: false
+  db:
+    name: bitnami_mediawiki
+    user: bn_mediawiki
+  master:
+    persistence:
+      enabled: true
+      ## mariadb data Persistent Volume Storage Class
+      ## If defined, storageClassName: <storageClass>
+      ## If set to "-", storageClassName: "", which disables dynamic provisioning
+      ## If undefined (the default) or set to null, no storageClassName spec is
+      ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+      ##   GKE, AWS & OpenStack)
+      ##
+      #storageClass: "-"
+      accessMode: ReadWriteOnce
+service:
+  ## Kubernetes svc type
+  ## For minikube, set this to NodePort, elsewhere use LoadBalancer
+  ##
+  type: NodePort
+  ## Use serviceLoadBalancerIP to request a specific static IP,
+  ## otherwise leave blank
+  ##
+  # loadBalancerIP:
+  # HTTP Port
+  port: 80
+  nodePorts:
+    http: ""
+    https: ""
+  ## Enable client source IP preservation
+  ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+  ##
+  externalTrafficPolicy: Cluster
+ingress:
+  ## Set to true to enable ingress record generation
+  enabled: false
+
+  ## The list of hostnames to be covered with this ingress record.
+  ## Most likely this will be just one host, but in the event more hosts are needed, this is an array
+  hosts:
+    - name: mediawiki.local
+
+      ## Set this to true in order to enable TLS on the ingress record
+      ## A side effect of this will be that the backend mediawiki service will be connected at port 443
+      tls: false
+
+      ## Set this to true in order to add the corresponding annotations for cert-manager
+      certManager: false
+
+      ## If TLS is set to true, you must declare what secret will store the key/certificate for TLS
+      tlsSecret: mediawiki.local-tls
+
+      annotations:
+      #  kubernetes.io/ingress.class: nginx
+
+  secrets:
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 8Gi
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 300m
+podSecurityContext:
+  enabled: true
+  fsGroup: 1001
+
+## Configure Container Security Context (only main container)
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+##
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1001
+
+## Configure extra options for liveness and readiness probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 120
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+## Pod annotations
+## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+##
+podAnnotations: {}
+
+## Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+affinity: {}
+
+## Prometheus Exporter / Metrics
+##
+metrics:
+  enabled: false
+  image:
+    registry: docker.io
+    repository: bitnami/apache-exporter
+    tag: 0.8.0-debian-10-r119
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
+  ## Metrics exporter resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  # resources: {}
+  ## Metrics exporter pod Annotation and Labels
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9117"
